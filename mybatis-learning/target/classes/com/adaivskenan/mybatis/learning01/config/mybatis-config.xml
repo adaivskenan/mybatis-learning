@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	<!-- doc:http://www.mybatis.org/mybatis-3/configuration.html -->
+	
+	<settings>
+		<setting name="logImpl" value="LOG4J" />
+		<!--	mapUnderscoreToCamelCase作用
+			是将数据库中下划线分割命名的字段转为驼峰命名映射实体类属性
+			例如: user_name 映射为 userName
+			作用: mapper文件中resultType返回类型时可以不写别名
+			-->
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+	</settings>
+
+	<typeAliases>
+		<package name="com.adaivskenan.mybatis.learning01.model" />
+	</typeAliases>
+
+	<environments default="development">
+		<environment id="development">
+			<transactionManager type="JDBC"></transactionManager>
+			<dataSource type="UNPOOLED">
+				<property name="driver" value="com.mysql.jdbc.Driver" />
+			<!--		useLegacyDatetimeCode参数默认是true，我们需要手动设置为false，否则无效。		-->
+				<property name="url" value="jdbc:mysql://localhost:3306/mybatis?useUnicode=true&amp;characterEncoding=UTF-8&amp;useLegacyDatetimeCode=false&amp;serverTimezone=GMT%2B8&amp;useSSL=false" />
+				<property name="username" value="root" />
+				<property name="password" value="qinjunjie" />
+			</dataSource>
+		</environment>
+	</environments>
+
+	<mappers>
+	<!-- 
+		<mapper resource="com/adaivskenan/mybatis/learning01/mapper/SysPrivilegeMapper.xml" />
+		<mapper resource="com/adaivskenan/mybatis/learning01/mapper/SysRoleMapper.xml" />
+		<mapper resource="com/adaivskenan/mybatis/learning01/mapper/SysRolePrivilegeMapper.xml" />
+		<mapper resource="com/adaivskenan/mybatis/learning01/mapper/SysUserMapper.xml" />
+		<mapper resource="com/adaivskenan/mybatis/learning01/mapper/SysUserRoleMapper.xml" />
+	-->
+	<!-- 方案二 扫描该包下所有Mapper文件，执行是将接口全限定名转化为路径-->
+	<package name="com.adaivskenan.mybatis.learning01.mapper"/>
+	<package name="com.adaivskenan.mybatis.learning01.proxy"/>
+	</mappers>
+</configuration>

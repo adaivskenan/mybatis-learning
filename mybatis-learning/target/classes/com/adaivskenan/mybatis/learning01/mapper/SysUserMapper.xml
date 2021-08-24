@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<!--
+	resultMap
+-->
+
+	<!--
+		当使用xml而不用接口时，namespace可以为任何值
+	-->
+<mapper namespace="com.adaivskenan.mybatis.learning01.mapper.SysUserMapper">
+	<resultMap id="userMap" type="com.adaivskenan.mybatis.learning01.model.SysUser">
+		<id property="id" column="id" />
+		<!--	映射时property的大小写其实无关，mybatis全部根据大写匹配	-->
+		<result property="userName" column="user_name" />
+		<result property="userPassword" column="user_password" />
+		<result property="userEmail" column="user_email" />
+		<result property="userInfo" column="user_info" />
+		<!--	需要在可能执行插入、更新和删除的且允许空值的列上指定 JDBC 类型 	-->
+		<result property="headImg" column="head_img" jdbcType="BLOB" />
+		<result property="createTime" column="create_time" jdbcType="TIMESTAMP" />
+	</resultMap>
+
+
+
+
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+	<!-- select -->
+
+	<!--
+		1、标签的id任何时候都不能出现英文符号的点
+		2、id不可重复
+		3、标签id对应接口的方法名称，如果接口内方法重载，则所有同名方法对应同一个id的语句
+	-->
+	<select id="selectById" resultMap="userMap">
+		select * from sys_user where id = #{id}
+	</select>
+
+	<!--	resultType 需要给返回这设置别名来映射到对应的实体类-->
+	<select id="selectAll" resultType="com.adaivskenan.mybatis.learning01.model.SysUser">
+		select id, user_name userName, user_password userPassword, user_email userEmail,
+			user_info userInfo, head_img headImg, create_time createTime
+		from sys_user
+	</select>
+
+	<!--	返回值是复合对象 -->
+	<select id="selectRolesByUserId" resultType="com.adaivskenan.mybatis.learning01.model.QuerySysRoleUser">
+		select 
+			r.id,
+			r.role_name roleName,
+			r.enabled,
+			r.create_by createBy,
+			r.create_time createTime,
+			u.user_name as "user.userName",
+			u.user_email as "user.userEmail"
+		from sys_user u
+		inner join sys_user_role ur on u.id=ur.user_id
+		inner join sys_role r on ur.role_id = r.id
+		where u.id = #{userId}
+	</select>
+
+	<!--	查询条件存在多值	-->
+	<select id="selectRolesByUserIdAndRoleEnabled" resultType="com.adaivskenan.mybatis.learning01.model.SysRole">
+		select * from sys_user u
+				inner join sys_user_role sur on u.id = sur.user_id
+				inner join sys_role sr on sur.role_id = sr.id
+			where u.id = #{userId} and sr.enabled = #{enabled}
+	</select>
+
+	<select id="selectByUser" resultType="com.adaivskenan.mybatis.learning01.model.SysUser">
+		select * from sys_user where 1=1
+		<if test="userName !=null and userName !=''">
+			and user_name like concat('%',#{userName}, '%')
+		</if>
+		<if test="userEmail !=null and userEmail !=''">
+			and user_email = #{userEmail}
+		</if>
+	</select>
+
+    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+	<!-- insert -->
+	
+	<insert id="insert">
+		insert into sys_user
+		(id, user_name, user_password, user_email, user_info, head_img, create_time)
+		values
+		(#{id}, #{userName}, #{userPassword}, #{userEmail}, #{userInfo}, #{headImg, jdbcType=BLOB}, #{createTime, jdbcType=TIMESTAMP})
+	</insert>
+	<!--
+		useGeneratedKeys : 会调用JDBC的 java.sql.Statement.getGeneratedKeys() 方法取出数据库内部生成的主键
+		keyProperty : （仅适用于 insert 和 update）指定能够唯一识别对象的属性，MyBatis 会使用 getGeneratedKeys 的返回值或 insert 语句的
+		 			selectKey 子元素设置它的值，默认值：未设置（unset）。如果生成列不止一个，可以用逗号分隔多个属性名称。
+		keyColumn : 仅适用于 insert 和 update）设置生成键值在表中的列名，在某些数据库（像 PostgreSQL）中，当主键列不是表中的第一列的时候，
+					是必须设置的。如果生成列不止一个，可以用逗号分隔多个属性名称。
+	-->
+	<insert id="insert2" useGeneratedKeys="true" keyProperty="id">
+	insert into sys_user
+		(user_name, user_password, user_email, user_info, head_img, create_time)
+		values
+		(#{userName}, #{userPassword}, #{userEmail}, #{userInfo}, #{headImg, jdbcType=BLOB}, #{createTime, jdbcType=TIMESTAMP})
+	</insert>
+
+
+	<!--
+		对于不支持自动生成主键列的数据库和可能不支持自动生成主键的 JDBC 驱动，MyBatis 有另外一种方法来生成主键。
+		可以设置为 BEFORE 或 AFTER。如果设置为 BEFORE，那么它首先会生成主键，设置 keyProperty 再执行插入语句。
+		如果设置为 AFTER，那么先执行插入语句，然后是 selectKey 中的语句
+		order : BEFORE (Oracle， SELECT SEQ_ID.nextval from dual)
+				AFTER  (Mysql,  SELECT LAST_INSERT_ID())
+	-->
+	<insert id="insertBySelectKey">
+		insert into sys_user
+		(user_name, user_password, user_email, user_info, head_img, create_time)
+		values
+		(#{userName}, #{userPassword}, #{userEmail}, #{userInfo}, #{headImg, jdbcType=BLOB}, #{createTime, jdbcType=TIMESTAMP})
+		<selectKey keyColumn="id" resultType="long"	keyProperty="id" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+
+	<!--	插入是根据条件判断是否插入 -->
+	<insert id="insertSelective" useGeneratedKeys="true" keyProperty="id">
+		insert into sys_user
+		(user_name, user_password,
+		 <if test="userEmail != null and userEmail !=''">
+		 user_email,
+		 </if>
+		 user_info, head_img, create_time)
+		values
+		(#{userName}, #{userPassword},
+		<if test="userEmail != null and userEmail !=''">
+		 #{userEmail},
+		</if>
+		 #{userInfo}, #{headImg, jdbcType=BLOB}, #{createTime, jdbcType=TIMESTAMP})
+	</insert>
+
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+
+	<!-- delete -->
+	<delete id="deleteById">
+		delete from sys_user where id = #{id}
+	</delete>
+
+
+
+
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+	
+	<!-- update -->
+	<update id="updateById">
+		update sys_user
+			set user_name = #{userName},
+			    user_password = #{userPassword},
+			    user_email = #{userEmail},
+			    user_info = #{userInfo},
+			    head_img = #{headImg, jdbcType=BLOB},
+			    create_time = #{createTime, jdbcType=TIMESTAMP}
+		where id = #{id}
+	</update>
+	<!--	选择性更新 -->
+	<update id="updateByIdSelective">
+		update sys_user
+		set
+		    <if test="userName !=null and userName !=''">user_name = #{userName},</if>
+			<if test="userPassword !=null and userPassword !=''">user_password = #{userPassword},</if>
+			<if test="userEmail !=null and userEmail !=''">user_email = #{userEmail},</if>
+			<if test="userInfo !=null and userInfo !=''">user_info = #{userInfo},</if>
+			<if test="headImg !=null and headImg !=''">head_img = #{headImg, jdbcType=BLOB},</if>
+			<if test="createTime !=null and createTime !=''">create_time = #{createTime, jdbcType=TIMESTAMP}</if>
+			id = #{id}
+		where id = #{id}
+	</update>
+
+
+</mapper>

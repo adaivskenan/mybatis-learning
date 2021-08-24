@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.adaivskenan.mybatis.learning01.proxy.UserMapper">
+    <resultMap id="userMap" type="com.adaivskenan.mybatis.learning01.model.SysUser">
+        <id property="id" column="id" />
+        <!--	映射时property的大小写其实无关，mybatis全部根据大写匹配	-->
+        <result property="userName" column="user_name" />
+        <result property="userPassword" column="user_password" />
+        <result property="userEmail" column="user_email" />
+        <result property="userInfo" column="user_info" />
+        <result property="headImg" column="head_img" jdbcType="BLOB" />
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP" />
+    </resultMap>
+    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+    <!-- select -->
+
+    <!--
+        1、标签的id任何时候都不能出现英文符号的点
+        2、id不可重复
+        3、标签id对应接口的方法名称，如果接口内方法重载，则所有同名方法对应同一个id的语句
+    -->
+    <select id="selectById" resultMap="userMap">
+        select * from sys_user where id = #{id}
+    </select>
+
+    <!--	resultType 需要给返回这设置别名来映射到对应的实体类-->
+    <select id="selectAll" resultType="com.adaivskenan.mybatis.learning01.model.SysUser">
+        select id, user_name userName, user_password userPassword, user_email userEmail,
+               user_info userInfo, head_img headImg, create_time createTime
+        from sys_user
+    </select>
+
+</mapper>
